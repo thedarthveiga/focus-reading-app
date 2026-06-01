@@ -1,0 +1,15 @@
+node_modules
+dist
+coverage
+.env
+*.log
+.git
+.github
+tests
+infra/scripts
+**/*.test.ts
+**/*.spec.ts
+README.md
+docker-compose.yml
+.eslintrc.js
+.dependency-cruiser.js

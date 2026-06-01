@@ -1,0 +1,88 @@
+version: '3.9'
+
+services:
+
+  # ── LocalStack — simulates AWS DynamoDB locally ───────────────────────────
+  localstack:
+    image: localstack/localstack:3.3
+    container_name: focus-reading-localstack
+    ports:
+      - '4566:4566'       # LocalStack gateway (all AWS services)
+    environment:
+      - SERVICES=dynamodb
+      - DEFAULT_REGION=us-east-1
+      - DEBUG=0
+      - PERSISTENCE=1     # persist data across restarts (mounted volume)
+    volumes:
+      - localstack-data:/var/lib/localstack
+      - /var/run/docker.sock:/var/run/docker.sock
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:4566/_localstack/health']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  # ── DB Init — creates table + seeds data ─────────────────────────────────
+  db-init:
+    image: node:20-alpine
+    container_name: focus-reading-db-init
+    working_dir: /app
+    volumes:
+      - .:/app
+    environment:
+      - DYNAMO_TABLE_NAME=focus-reading
+      - DYNAMO_ENDPOINT=http://localstack:4566
+      - AWS_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=local
+      - AWS_SECRET_ACCESS_KEY=local
+    command: >
+      sh -c "
+        npm install &&
+        npx ts-node infra/scripts/createTable.ts &&
+        npx ts-node infra/scripts/seed.ts
+      "
+    depends_on:
+      localstack:
+        condition: service_healthy
+
+  # ── API ───────────────────────────────────────────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder      # use builder stage for dev (includes ts-node)
+    container_name: focus-reading-api
+    ports:
+      - '3000:3000'
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - HOST=0.0.0.0
+      - LOG_LEVEL=info
+      - DYNAMO_TABLE_NAME=focus-reading
+      - DYNAMO_ENDPOINT=http://localstack:4566
+      - AWS_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=local
+      - AWS_SECRET_ACCESS_KEY=local
+      - SPOTIFY_CLIENT_ID=${SPOTIFY_CLIENT_ID:-placeholder}
+      - SPOTIFY_CLIENT_SECRET=${SPOTIFY_CLIENT_SECRET:-placeholder}
+    command: npx ts-node -r tsconfig-paths/register src/adapters/input/rest/server.ts
+    volumes:
+      - ./src:/app/src:ro    # hot reload source
+    depends_on:
+      localstack:
+        condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://localhost:3000/health']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    restart: unless-stopped
+
+volumes:
+  localstack-data:
+    driver: local

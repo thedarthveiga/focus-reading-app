@@ -1,0 +1,15 @@
+# CODEOWNERS
+# These owners are automatically requested for review on PRs.
+# Format: <path-pattern> <owner1> <owner2>
+
+# Global fallback — all files
+*                          @your-github-username
+
+# Domain layer — requires domain expert review
+src/domain/                @your-github-username
+src/ports/                 @your-github-username
+
+# CI / infrastructure changes
+.github/                   @your-github-username
+*.json                     @your-github-username
+*.yml                      @your-github-username
