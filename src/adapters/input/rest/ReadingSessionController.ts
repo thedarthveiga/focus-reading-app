@@ -30,12 +30,10 @@ export function registerReadingSessionRoutes(
     async (req: FastifyRequest, reply: FastifyReply) => {
       const parsed = PrepareSessionSchema.safeParse(req.body);
       if (!parsed.success) {
-        return reply
-          .status(400)
-          .send({
-            error: "Validation failed",
-            details: parsed.error.flatten(),
-          });
+        return reply.status(400).send({
+          error: "Validation failed",
+          details: parsed.error.flatten(),
+        });
       }
 
       try {
@@ -52,12 +50,10 @@ export function registerReadingSessionRoutes(
     async (req: FastifyRequest, reply: FastifyReply) => {
       const parsed = CalibrateWpmSchema.safeParse(req.body);
       if (!parsed.success) {
-        return reply
-          .status(400)
-          .send({
-            error: "Validation failed",
-            details: parsed.error.flatten(),
-          });
+        return reply.status(400).send({
+          error: "Validation failed",
+          details: parsed.error.flatten(),
+        });
       }
 
       try {
