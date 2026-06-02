@@ -1,7 +1,10 @@
-import { ChapterMood } from '../../../domain/entities/Book';
-import { MOOD_TO_FOCUS_MAP, Playlist } from '../../../domain/entities/Playlist';
-import { DomainError } from '../../../domain/errors/DomainError';
-import { PlaylistSearchCriteria, SpotifyServicePort } from '../../../ports/driven/SpotifyServicePort';
+import { ChapterMood } from "../../../domain/entities/Book";
+import { MOOD_TO_FOCUS_MAP, Playlist } from "../../../domain/entities/Playlist";
+import { DomainError } from "../../../domain/errors/DomainError";
+import {
+  PlaylistSearchCriteria,
+  SpotifyServicePort,
+} from "../../../ports/driven/SpotifyServicePort";
 
 interface SpotifyTokenResponse {
   access_token: string;
@@ -20,10 +23,10 @@ interface SpotifySearchResponse {
 
 /** Mood-to-Spotify-search-query mapping for focus-inducing playlists */
 const MOOD_QUERIES: Record<ChapterMood, string> = {
-  reflective: 'alpha waves focus deep reading',
-  calm: 'alpha waves ambient study',
-  tense: 'binaural beats focus thriller',
-  action: 'ambient electronic focus',
+  reflective: "alpha waves focus deep reading",
+  calm: "alpha waves ambient study",
+  tense: "binaural beats focus thriller",
+  action: "ambient electronic focus",
 };
 
 export class SpotifyApiAdapter implements SpotifyServicePort {
@@ -33,7 +36,7 @@ export class SpotifyApiAdapter implements SpotifyServicePort {
   constructor(
     private readonly clientId: string,
     private readonly clientSecret: string,
-    private readonly baseUrl = 'https://api.spotify.com/v1',
+    private readonly baseUrl = "https://api.spotify.com/v1",
   ) {}
 
   async findPlaylistFor(criteria: PlaylistSearchCriteria): Promise<Playlist> {
@@ -47,14 +50,20 @@ export class SpotifyApiAdapter implements SpotifyServicePort {
     });
 
     if (!res.ok) {
-      throw new DomainError(`Spotify API error: ${res.status}`, 'SPOTIFY_API_ERROR');
+      throw new DomainError(
+        `Spotify API error: ${res.status}`,
+        "SPOTIFY_API_ERROR",
+      );
     }
 
     const data = (await res.json()) as SpotifySearchResponse;
     const items = data.playlists?.items ?? [];
 
     if (items.length === 0) {
-      throw new DomainError('No playlist found for the given criteria', 'PLAYLIST_NOT_FOUND');
+      throw new DomainError(
+        "No playlist found for the given criteria",
+        "PLAYLIST_NOT_FOUND",
+      );
     }
 
     // Pick the first playlist — future: rank by duration match
@@ -75,18 +84,23 @@ export class SpotifyApiAdapter implements SpotifyServicePort {
       return this.cachedToken;
     }
 
-    const credentials = Buffer.from(`${this.clientId}:${this.clientSecret}`).toString('base64');
-    const res = await fetch('https://accounts.spotify.com/api/token', {
-      method: 'POST',
+    const credentials = Buffer.from(
+      `${this.clientId}:${this.clientSecret}`,
+    ).toString("base64");
+    const res = await fetch("https://accounts.spotify.com/api/token", {
+      method: "POST",
       headers: {
         Authorization: `Basic ${credentials}`,
-        'Content-Type': 'application/x-www-form-urlencoded',
+        "Content-Type": "application/x-www-form-urlencoded",
       },
-      body: 'grant_type=client_credentials',
+      body: "grant_type=client_credentials",
     });
 
     if (!res.ok) {
-      throw new DomainError('Failed to obtain Spotify access token', 'SPOTIFY_AUTH_ERROR');
+      throw new DomainError(
+        "Failed to obtain Spotify access token",
+        "SPOTIFY_AUTH_ERROR",
+      );
     }
 
     const data = (await res.json()) as SpotifyTokenResponse;

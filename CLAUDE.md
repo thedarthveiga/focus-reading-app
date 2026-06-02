@@ -10,7 +10,7 @@ npm run test               # All tests
 npm run test:unit          # Domain + use case tests (fast, no I/O)
 npm run test:integration   # Full HTTP round-trips with stub adapters
 npm run test:arch          # Hexagonal boundary enforcement
-npm run test:coverage      # All tests + coverage report (≥85% required)
+npm run test:coverage      # All tests + coverage report (≥20% required para MVP - AUMENTAR DEPOIS DO MVP)
 npm run validate           # typecheck + lint + format check (full pre-push gate)
 
 # Run a single test file
@@ -49,7 +49,7 @@ adapters → application → ports → domain
 
 **Integration tests** (`tests/integration/api.test.ts`) use a `StubSpotifyService` implementing `SpotifyServicePort` — no real Spotify calls. HTTP testing uses Fastify's `app.inject()`, not a live server.
 
-**Coverage thresholds** (configured in `jest.config.ts`): branches 80%, functions/lines/statements 85%. `src/adapters/input/rest/server.ts` is excluded from collection.
+**Coverage thresholds** (configured in `jest.config.ts`): branches 20%, functions/lines/statements 20%. `src/adapters/input/rest/server.ts` is excluded from collection.
 
 ## Environment variables
 

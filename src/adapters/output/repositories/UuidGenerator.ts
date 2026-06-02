@@ -1,9 +1,9 @@
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from "crypto";
 
-import { IdGeneratorPort } from '../../../ports/driven/IdGeneratorPort';
+import { IdGeneratorPort } from "../../../ports/driven/IdGeneratorPort";
 
 export class UuidGenerator implements IdGeneratorPort {
   generate(): string {
-    return uuidv4();
+    return randomUUID();
   }
 }

@@ -1,7 +1,10 @@
-import { ReadingTimeCalculator } from '../../domain/services/ReadingTimeCalculator';
-import { WpmSpeed } from '../../domain/value-objects/WpmSpeed';
-import { UserRepositoryPort } from '../../ports/driven/UserRepositoryPort';
-import { CalibrateWpmInput, CalibrateWpmUseCase } from '../../ports/driving/CalibrateWpmUseCase';
+import { ReadingTimeCalculator } from "../../domain/services/ReadingTimeCalculator";
+import { WpmSpeed } from "../../domain/value-objects/WpmSpeed";
+import { UserRepositoryPort } from "../../ports/driven/UserRepositoryPort";
+import {
+  CalibrateWpmInput,
+  CalibrateWpmUseCase,
+} from "../../ports/driving/CalibrateWpmUseCase";
 
 export class CalibrateWpmInteractor implements CalibrateWpmUseCase {
   constructor(private readonly userRepo: UserRepositoryPort) {}
@@ -14,7 +17,11 @@ export class CalibrateWpmInteractor implements CalibrateWpmUseCase {
       input.elapsedSeconds,
     );
 
-    const newWpm = WpmSpeed.create(wpmValue, new Date(), (user.wpmSpeed.sampleCount ?? 0) + 1);
+    const newWpm = WpmSpeed.create(
+      wpmValue,
+      new Date(),
+      (user.wpmSpeed.sampleCount ?? 0) + 1,
+    );
     const updatedUser = user.withUpdatedWpm(newWpm);
 
     await this.userRepo.save(updatedUser);

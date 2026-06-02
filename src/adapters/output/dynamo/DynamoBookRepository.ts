@@ -1,15 +1,16 @@
+import { QueryCommand, TransactWriteCommand } from "@aws-sdk/lib-dynamodb";
+import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
+
+import { Book } from "../../../domain/entities/Book";
+import { EntityNotFoundError } from "../../../domain/errors/DomainError";
+import { BookRepositoryPort } from "../../../ports/driven/BookRepositoryPort";
+
+import { GSI1_INDEX, Keys } from "./DynamoKeys";
 import {
-  QueryCommand,
-  TransactWriteCommand,
-} from '@aws-sdk/lib-dynamodb';
-import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
-
-import { Book } from '../../../domain/entities/Book';
-import { EntityNotFoundError } from '../../../domain/errors/DomainError';
-import { BookRepositoryPort } from '../../../ports/driven/BookRepositoryPort';
-
-import { GSI1_INDEX, Keys } from './DynamoKeys';
-import { BookDynamoItem, BookMapper, ChapterDynamoItem } from './mappers/BookMapper';
+  BookDynamoItem,
+  BookMapper,
+  ChapterDynamoItem,
+} from "./mappers/BookMapper";
 
 export class DynamoBookRepository implements BookRepositoryPort {
   constructor(
@@ -25,25 +26,27 @@ export class DynamoBookRepository implements BookRepositoryPort {
     const result = await this.client.send(
       new QueryCommand({
         TableName: this.tableName,
-        KeyConditionExpression: 'PK = :pk',
+        KeyConditionExpression: "PK = :pk",
         ExpressionAttributeValues: {
-          ':pk': Keys.book.pk(id),
+          ":pk": Keys.book.pk(id),
         },
       }),
     );
 
     const items = result.Items ?? [];
-    const bookItem = items.find(i => i['SK'] === Keys.book.sk()) as BookDynamoItem | undefined;
-    const chapterItems = items.filter(i =>
-      (i['SK'] as string).startsWith(Keys.book.chapterPrefix()),
+    const bookItem = items.find((i) => i["SK"] === Keys.book.sk()) as
+      | BookDynamoItem
+      | undefined;
+    const chapterItems = items.filter((i) =>
+      (i["SK"] as string).startsWith(Keys.book.chapterPrefix()),
     ) as ChapterDynamoItem[];
 
     if (!bookItem) {
-      throw new EntityNotFoundError('Book', id);
+      throw new EntityNotFoundError("Book", id);
     }
 
     if (chapterItems.length === 0) {
-      throw new EntityNotFoundError('Book chapters', id);
+      throw new EntityNotFoundError("Book chapters", id);
     }
 
     return BookMapper.toDomain(bookItem, chapterItems);
@@ -58,10 +61,11 @@ export class DynamoBookRepository implements BookRepositoryPort {
       new QueryCommand({
         TableName: this.tableName,
         IndexName: GSI1_INDEX,
-        KeyConditionExpression: 'GSI1PK = :gsi1pk AND begins_with(GSI1SK, :titlePrefix)',
+        KeyConditionExpression:
+          "GSI1PK = :gsi1pk AND begins_with(GSI1SK, :titlePrefix)",
         ExpressionAttributeValues: {
-          ':gsi1pk': Keys.gsi1.bookTitlePk(),
-          ':titlePrefix': title.toLowerCase().trim(),
+          ":gsi1pk": Keys.gsi1.bookTitlePk(),
+          ":titlePrefix": title.toLowerCase().trim(),
         },
       }),
     );
@@ -69,7 +73,9 @@ export class DynamoBookRepository implements BookRepositoryPort {
     const bookItems = (result.Items ?? []) as BookDynamoItem[];
 
     // Fetch full book (with chapters) for each result
-    const books = await Promise.all(bookItems.map(item => this.findById(item.id)));
+    const books = await Promise.all(
+      bookItems.map((item) => this.findById(item.id)),
+    );
     return books;
   }
 
@@ -86,7 +92,7 @@ export class DynamoBookRepository implements BookRepositoryPort {
     // DynamoDB TransactWrite supports up to 100 items
     await this.client.send(
       new TransactWriteCommand({
-        TransactItems: allItems.map(item => ({
+        TransactItems: allItems.map((item) => ({
           Put: {
             TableName: this.tableName,
             Item: item,

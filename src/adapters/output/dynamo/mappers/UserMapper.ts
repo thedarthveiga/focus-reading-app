@@ -1,11 +1,11 @@
-import { User } from '../../../../domain/entities/User';
-import { WpmSpeed } from '../../../../domain/value-objects/WpmSpeed';
-import { Keys } from '../DynamoKeys';
+import { User } from "../../../../domain/entities/User";
+import { WpmSpeed } from "../../../../domain/value-objects/WpmSpeed";
+import { Keys } from "../DynamoKeys";
 
 export interface UserDynamoItem {
   PK: string;
   SK: string;
-  entityType: 'USER';
+  entityType: "USER";
   id: string;
   email: string;
   wpmValue: number;
@@ -19,7 +19,7 @@ export const UserMapper = {
     return {
       PK: Keys.user.pk(user.id),
       SK: Keys.user.sk(),
-      entityType: 'USER',
+      entityType: "USER",
       id: user.id,
       email: user.email,
       wpmValue: user.wpmSpeed.value,
