@@ -1,4 +1,4 @@
-import { Book } from '../../domain/entities/Book';
+import { Book } from "../../domain/entities/Book";
 
 export interface BookRepositoryPort {
   findById(id: string): Promise<Book>;

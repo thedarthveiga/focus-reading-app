@@ -1,12 +1,16 @@
-import { Book, ChapterMetadata, ChapterMood } from '../../../../domain/entities/Book';
-import { Keys } from '../DynamoKeys';
+import {
+  Book,
+  ChapterMetadata,
+  ChapterMood,
+} from "../../../../domain/entities/Book";
+import { Keys } from "../DynamoKeys";
 
 export interface BookDynamoItem {
   PK: string;
   SK: string;
   GSI1PK: string;
   GSI1SK: string;
-  entityType: 'BOOK';
+  entityType: "BOOK";
   id: string;
   title: string;
   author: string;
@@ -16,7 +20,7 @@ export interface BookDynamoItem {
 export interface ChapterDynamoItem {
   PK: string;
   SK: string;
-  entityType: 'CHAPTER';
+  entityType: "CHAPTER";
   bookId: string;
   number: number;
   title: string;
@@ -31,7 +35,7 @@ export const BookMapper = {
       SK: Keys.book.sk(),
       GSI1PK: Keys.gsi1.bookTitlePk(),
       GSI1SK: Keys.gsi1.bookTitleSk(book.title),
-      entityType: 'BOOK',
+      entityType: "BOOK",
       id: book.id,
       title: book.title,
       author: book.author,
@@ -40,10 +44,10 @@ export const BookMapper = {
   },
 
   toChapterItems(book: Book): ChapterDynamoItem[] {
-    return book.chaptersMetadata.map(ch => ({
+    return book.chaptersMetadata.map((ch) => ({
       PK: Keys.book.pk(book.id),
       SK: Keys.book.chapterSk(ch.number),
-      entityType: 'CHAPTER',
+      entityType: "CHAPTER",
       bookId: book.id,
       number: ch.number,
       title: ch.title,
@@ -53,7 +57,7 @@ export const BookMapper = {
   },
 
   toDomain(bookItem: BookDynamoItem, chapterItems: ChapterDynamoItem[]): Book {
-    const chapters: ChapterMetadata[] = chapterItems.map(ch => ({
+    const chapters: ChapterMetadata[] = chapterItems.map((ch) => ({
       number: ch.number,
       title: ch.title,
       wordCount: ch.wordCount,

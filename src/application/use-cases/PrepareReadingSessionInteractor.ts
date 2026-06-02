@@ -1,14 +1,14 @@
-import { ReadingSession } from '../../domain/entities/ReadingSession';
-import { ReadingTimeCalculator } from '../../domain/services/ReadingTimeCalculator';
-import { IdGeneratorPort } from '../../ports/driven/IdGeneratorPort';
-import { BookRepositoryPort } from '../../ports/driven/BookRepositoryPort';
-import { SpotifyServicePort } from '../../ports/driven/SpotifyServicePort';
-import { UserRepositoryPort } from '../../ports/driven/UserRepositoryPort';
+import { ReadingSession } from "../../domain/entities/ReadingSession";
+import { ReadingTimeCalculator } from "../../domain/services/ReadingTimeCalculator";
+import { BookRepositoryPort } from "../../ports/driven/BookRepositoryPort";
+import { IdGeneratorPort } from "../../ports/driven/IdGeneratorPort";
+import { SpotifyServicePort } from "../../ports/driven/SpotifyServicePort";
+import { UserRepositoryPort } from "../../ports/driven/UserRepositoryPort";
 import {
   PrepareReadingSessionUseCase,
   PrepareSessionInput,
   PrepareSessionOutput,
-} from '../../ports/driving/PrepareReadingSessionUseCase';
+} from "../../ports/driving/PrepareReadingSessionUseCase";
 
 export class PrepareReadingSessionInteractor implements PrepareReadingSessionUseCase {
   constructor(
@@ -29,7 +29,10 @@ export class PrepareReadingSessionInteractor implements PrepareReadingSessionUse
     const chapter = book.getChapter(input.chapterNumber);
 
     // Pure domain calculation — no I/O
-    const duration = ReadingTimeCalculator.calculate(chapter.wordCount, user.wpmSpeed);
+    const duration = ReadingTimeCalculator.calculate(
+      chapter.wordCount,
+      user.wpmSpeed,
+    );
 
     // Fetch matching Spotify playlist via driven port
     const playlist = await this.spotifyService.findPlaylistFor({

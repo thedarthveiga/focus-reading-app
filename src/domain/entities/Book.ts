@@ -1,6 +1,6 @@
-import { EntityNotFoundError, InvalidValueError } from '../errors/DomainError';
+import { EntityNotFoundError, InvalidValueError } from "../errors/DomainError";
 
-export const CHAPTER_MOODS = ['tense', 'calm', 'action', 'reflective'] as const;
+export const CHAPTER_MOODS = ["tense", "calm", "action", "reflective"] as const;
 export type ChapterMood = (typeof CHAPTER_MOODS)[number];
 
 export interface ChapterMetadata {
@@ -25,18 +25,21 @@ export class Book {
     chapters: ChapterMetadata[],
   ): Book {
     if (!title || title.trim().length === 0) {
-      throw new InvalidValueError('title', 'must not be empty');
+      throw new InvalidValueError("title", "must not be empty");
     }
     if (!author || author.trim().length === 0) {
-      throw new InvalidValueError('author', 'must not be empty');
+      throw new InvalidValueError("author", "must not be empty");
     }
     if (chapters.length === 0) {
-      throw new InvalidValueError('chapters', 'book must have at least one chapter');
+      throw new InvalidValueError(
+        "chapters",
+        "book must have at least one chapter",
+      );
     }
-    const invalidChapter = chapters.find(c => c.wordCount <= 0);
+    const invalidChapter = chapters.find((c) => c.wordCount <= 0);
     if (invalidChapter) {
       throw new InvalidValueError(
-        'wordCount',
+        "wordCount",
         `chapter ${invalidChapter.number} has invalid word count: ${invalidChapter.wordCount}`,
       );
     }
@@ -44,9 +47,9 @@ export class Book {
   }
 
   getChapter(number: number): ChapterMetadata {
-    const chapter = this.chaptersMetadata.find(c => c.number === number);
+    const chapter = this.chaptersMetadata.find((c) => c.number === number);
     if (!chapter) {
-      throw new EntityNotFoundError('Chapter', `${this.title}#${number}`);
+      throw new EntityNotFoundError("Chapter", `${this.title}#${number}`);
     }
     return chapter;
   }

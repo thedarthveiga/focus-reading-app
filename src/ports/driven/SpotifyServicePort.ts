@@ -1,5 +1,5 @@
-import { ChapterMood } from '../../domain/entities/Book';
-import { Playlist } from '../../domain/entities/Playlist';
+import { ChapterMood } from "../../domain/entities/Book";
+import { Playlist } from "../../domain/entities/Playlist";
 
 export interface PlaylistSearchCriteria {
   readonly durationMinutes: number;

@@ -1,11 +1,11 @@
-import { InvalidValueError } from '../errors/DomainError';
+import { InvalidValueError } from "../errors/DomainError";
 
 export class ReadingDuration {
   private constructor(readonly inMinutes: number) {}
 
   static fromMinutes(minutes: number): ReadingDuration {
     if (minutes <= 0) {
-      throw new InvalidValueError('duration', 'must be greater than 0');
+      throw new InvalidValueError("duration", "must be greater than 0");
     }
     return new ReadingDuration(Math.ceil(minutes));
   }
