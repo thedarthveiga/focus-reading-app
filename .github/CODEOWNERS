@@ -3,13 +3,21 @@
 # Format: <path-pattern> <owner1> <owner2>
 
 # Global fallback — all files
-*                          @your-github-username
+*                          @thedarthveiga
 
 # Domain layer — requires domain expert review
-src/domain/                @your-github-username
-src/ports/                 @your-github-username
+src/domain/                @thedarthveiga
+src/ports/                 @thedarthveiga
 
 # CI / infrastructure changes
-.github/                   @your-github-username
-*.json                     @your-github-username
-*.yml                      @your-github-username
+.github/                   @thedarthveiga
+*.json                     @thedarthveiga
+*.yml                      @thedarthveiga
+
+# Arquivos críticos de Qualidade de Código (Lint, Tests, Formatter)
+package.json               @thedarthveiga
+jest.config.ts             @thedarthveiga
+.eslintrc.js               @thedarthveiga
+setup-branch-protection.sh @thedarthveiga
+README.md                  @thedarthveiga
+CLAUDE.md                  @thedarthveiga
