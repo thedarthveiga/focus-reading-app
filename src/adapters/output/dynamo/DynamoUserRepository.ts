@@ -1,15 +1,12 @@
-import {
-  GetCommand,
-  PutCommand,
-} from '@aws-sdk/lib-dynamodb';
-import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
+import { GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
+import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
 
-import { User } from '../../../domain/entities/User';
-import { EntityNotFoundError } from '../../../domain/errors/DomainError';
-import { UserRepositoryPort } from '../../../ports/driven/UserRepositoryPort';
+import { User } from "../../../domain/entities/User";
+import { EntityNotFoundError } from "../../../domain/errors/DomainError";
+import { UserRepositoryPort } from "../../../ports/driven/UserRepositoryPort";
 
-import { Keys } from './DynamoKeys';
-import { UserDynamoItem, UserMapper } from './mappers/UserMapper';
+import { Keys } from "./DynamoKeys";
+import { UserDynamoItem, UserMapper } from "./mappers/UserMapper";
 
 export class DynamoUserRepository implements UserRepositoryPort {
   constructor(
@@ -29,7 +26,7 @@ export class DynamoUserRepository implements UserRepositoryPort {
     );
 
     if (!result.Item) {
-      throw new EntityNotFoundError('User', id);
+      throw new EntityNotFoundError("User", id);
     }
 
     return UserMapper.toDomain(result.Item as UserDynamoItem);
@@ -58,12 +55,12 @@ export class DynamoUserRepository implements UserRepositoryPort {
         new PutCommand({
           TableName: this.tableName,
           Item: item,
-          ConditionExpression: 'attribute_not_exists(PK)',
+          ConditionExpression: "attribute_not_exists(PK)",
         }),
       );
     } catch (err: unknown) {
       const isConditionalCheckFailed =
-        err instanceof Error && err.name === 'ConditionalCheckFailedException';
+        err instanceof Error && err.name === "ConditionalCheckFailedException";
       if (!isConditionalCheckFailed) throw err;
       // User already exists — silently ignore
     }

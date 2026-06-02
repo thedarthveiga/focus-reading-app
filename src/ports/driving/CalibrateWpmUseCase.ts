@@ -1,4 +1,4 @@
-import { WpmSpeed } from '../../domain/value-objects/WpmSpeed';
+import { WpmSpeed } from "../../domain/value-objects/WpmSpeed";
 
 export interface CalibrateWpmInput {
   readonly userId: string;

@@ -1,5 +1,5 @@
-import { ReadingDuration } from '../value-objects/ReadingDuration';
-import { WpmSpeed } from '../value-objects/WpmSpeed';
+import { ReadingDuration } from "../value-objects/ReadingDuration";
+import { WpmSpeed } from "../value-objects/WpmSpeed";
 
 /**
  * Pure domain service — no I/O, no side effects.

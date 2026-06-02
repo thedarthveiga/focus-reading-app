@@ -1,4 +1,4 @@
-import { InvalidValueError } from '../errors/DomainError';
+import { InvalidValueError } from "../errors/DomainError";
 
 export const WPM_MIN = 100;
 export const WPM_MAX = 1000;
@@ -10,12 +10,19 @@ export class WpmSpeed {
     readonly sampleCount: number,
   ) {}
 
-  static create(value: number, calibratedAt: Date, sampleCount: number): WpmSpeed {
+  static create(
+    value: number,
+    calibratedAt: Date,
+    sampleCount: number,
+  ): WpmSpeed {
     if (!Number.isInteger(value) || value < WPM_MIN || value > WPM_MAX) {
-      throw new InvalidValueError('wpmSpeed', `must be an integer between ${WPM_MIN} and ${WPM_MAX}, got ${value}`);
+      throw new InvalidValueError(
+        "wpmSpeed",
+        `must be an integer between ${WPM_MIN} and ${WPM_MAX}, got ${value}`,
+      );
     }
     if (sampleCount < 1) {
-      throw new InvalidValueError('sampleCount', 'must be at least 1');
+      throw new InvalidValueError("sampleCount", "must be at least 1");
     }
     return new WpmSpeed(value, calibratedAt, sampleCount);
   }

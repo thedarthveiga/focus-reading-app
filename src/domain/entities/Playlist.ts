@@ -1,16 +1,20 @@
-import { InvalidValueError } from '../errors/DomainError';
+import { InvalidValueError } from "../errors/DomainError";
 
-import { ChapterMood } from './Book';
+import { ChapterMood } from "./Book";
 
-export const FOCUS_TYPES = ['alpha-waves', 'ambient', 'binaural-beats'] as const;
+export const FOCUS_TYPES = [
+  "alpha-waves",
+  "ambient",
+  "binaural-beats",
+] as const;
 export type FocusType = (typeof FOCUS_TYPES)[number];
 
 /** Maps chapter mood to the best focus type for neurological immersion */
 export const MOOD_TO_FOCUS_MAP: Record<ChapterMood, FocusType> = {
-  reflective: 'alpha-waves',
-  calm: 'alpha-waves',
-  tense: 'binaural-beats',
-  action: 'ambient',
+  reflective: "alpha-waves",
+  calm: "alpha-waves",
+  tense: "binaural-beats",
+  action: "ambient",
 };
 
 export class Playlist {
@@ -30,12 +34,18 @@ export class Playlist {
     name: string,
   ): Playlist {
     if (!spotifyPlaylistId || spotifyPlaylistId.trim().length === 0) {
-      throw new InvalidValueError('spotifyPlaylistId', 'must not be empty');
+      throw new InvalidValueError("spotifyPlaylistId", "must not be empty");
     }
     if (durationMinutes <= 0) {
-      throw new InvalidValueError('durationMinutes', 'must be greater than 0');
+      throw new InvalidValueError("durationMinutes", "must be greater than 0");
     }
-    return new Playlist(id, spotifyPlaylistId.trim(), focusType, durationMinutes, name.trim());
+    return new Playlist(
+      id,
+      spotifyPlaylistId.trim(),
+      focusType,
+      durationMinutes,
+      name.trim(),
+    );
   }
 
   coversSession(sessionDurationMinutes: number): boolean {
