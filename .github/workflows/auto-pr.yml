@@ -1,0 +1,294 @@
+name: Auto PR — GitFlow
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+
+jobs:
+  auto-pr:
+    name: Open PR (GitFlow)
+    runs-on: ubuntu-latest
+    # Only act when CI succeeded; ignore skipped/failed runs
+    if: github.event.workflow_run.conclusion == 'success'
+    permissions:
+      pull-requests: write
+      contents: write   # needed to push release branches
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      BRANCH: ${{ github.event.workflow_run.head_branch }}
+      REPO: ${{ github.repository }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      # ── Ensure all GitFlow labels exist (idempotent) ─────────────────────────
+      - name: Ensure GitFlow labels exist
+        run: |
+          gh label create "feature→develop" \
+            --color "0075ca" --description "Auto-PR: feature branch to develop" \
+            --repo "$REPO" 2>/dev/null || true
+          gh label create "develop→release" \
+            --color "e4e669" --description "Auto-PR: develop to release candidate" \
+            --repo "$REPO" 2>/dev/null || true
+          gh label create "release→main" \
+            --color "d93f0b" --description "Auto-PR: release candidate to main" \
+            --repo "$REPO" 2>/dev/null || true
+
+      # ── Case 1: feature/* → develop ─────────────────────────────────────────
+      - name: feature/* → develop
+        if: startsWith(env.BRANCH, 'feature/')
+        run: |
+          EXISTING=$(gh pr list \
+            --repo "$REPO" --head "$BRANCH" --base develop \
+            --state open --json number --jq '.[0].number')
+          if [ -n "$EXISTING" ]; then
+            echo "PR #${EXISTING} already exists for ${BRANCH} → develop"
+            exit 0
+          fi
+
+          TITLE="feat: $(echo "$BRANCH" | sed 's|feature/||' | tr '-' ' ')"
+
+          cat > /tmp/pr-body.md << 'TMPL'
+## Related issue
+
+Closes # <!-- required -->
+
+## Type of change
+
+- [ ] `feat` — new feature
+- [ ] `fix` — bug fix
+- [ ] `refactor` — code change without feature/fix
+- [ ] `test` — adding or fixing tests
+- [ ] `docs` — documentation only
+- [ ] `chore` — build/tooling/deps
+- [ ] `perf` — performance improvement
+
+## What changed and why
+
+<!-- What does this PR do? Why was this change needed? Be specific. -->
+
+## Technical checklist
+
+- [x] CI passed ✅
+- [ ] `npm run typecheck` passes
+- [ ] `npm run test:unit` passes
+- [ ] `npm run test:integration` passes
+- [ ] `npm run test:arch` passes
+- [ ] Coverage remains ≥ 85% (`npm run test:coverage`)
+- [ ] No `console.log` left in production code
+- [ ] No new `any` types introduced
+
+## Architecture checklist
+
+- [ ] `domain` and `ports` layers have zero imports from `adapters` or `application`
+- [ ] No framework decorators or I/O in the domain layer
+- [ ] New use cases implement a `Port` interface in `ports/driving/`
+- [ ] New adapters implement the corresponding `Port` in `ports/driven/`
+- [ ] InMemory adapter provided for any new repository port
+
+## Branch checklist
+
+- [x] Branch created from `develop`
+- [x] Branch name follows convention (`feature/` + kebab-case, max 4 words)
+- [x] PR targets `develop`
+
+## Screenshots / evidence
+
+<!-- Delete if not relevant -->
+
+---
+
+## Reviewer checklist
+
+- [ ] Code matches the stated intent and the linked issue
+- [ ] No business logic leaked into adapters
+- [ ] Error cases handled and tested
+- [ ] No sensitive data logged or exposed
+TMPL
+          printf '\n---\n🤖 Auto-PR after CI passed on `%s`.\n' "$BRANCH" \
+            >> /tmp/pr-body.md
+
+          gh pr create \
+            --repo  "$REPO" \
+            --head  "$BRANCH" \
+            --base  develop \
+            --title "$TITLE" \
+            --label "feature→develop" \
+            --body-file /tmp/pr-body.md
+
+      # ── Case 2: develop → release/vX.Y.Z ────────────────────────────────────
+      - name: develop → release/vX.Y.Z
+        if: env.BRANCH == 'develop'
+        run: |
+          git fetch --tags --quiet
+
+          # Compute next patch version from the latest semver tag
+          LAST_TAG=$(git tag --sort=-version:refname \
+            | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -1)
+          if [ -z "$LAST_TAG" ]; then
+            NEXT_VER="v0.1.0"
+            BASE_REF="main"
+          else
+            MAJOR=$(echo "$LAST_TAG" | sed 's/v//' | cut -d. -f1)
+            MINOR=$(echo "$LAST_TAG" | sed 's/v//' | cut -d. -f2)
+            PATCH=$(echo "$LAST_TAG" | sed 's/v//' | cut -d. -f3)
+            NEXT_VER="v${MAJOR}.${MINOR}.$((PATCH + 1))"
+            BASE_REF="$LAST_TAG"
+          fi
+          RELEASE_BRANCH="release/${NEXT_VER}"
+
+          # Create the release branch from the last tag (or main) if it doesn't exist.
+          # Starting from the last stable point makes the diff in the PR meaningful.
+          git fetch origin --quiet
+          if ! git ls-remote --heads origin "$RELEASE_BRANCH" | grep -q .; then
+            git checkout -b "$RELEASE_BRANCH" "$BASE_REF"
+            git push origin "$RELEASE_BRANCH"
+            echo "Created ${RELEASE_BRANCH} from ${BASE_REF}"
+          fi
+
+          EXISTING=$(gh pr list \
+            --repo "$REPO" --head develop --base "$RELEASE_BRANCH" \
+            --state open --json number --jq '.[0].number')
+          if [ -n "$EXISTING" ]; then
+            echo "PR #${EXISTING} already exists for develop → ${RELEASE_BRANCH}"
+            exit 0
+          fi
+
+          cat > /tmp/pr-body.md << 'TMPL'
+## Release candidate
+
+This PR brings all changes from `develop` into the release branch for stabilisation
+before merging into `main`.
+
+## Type of change
+
+- [x] Release preparation
+
+## What changed and why
+
+<!-- Summarise the highlights of this release -->
+
+## Technical checklist
+
+- [x] CI passed ✅ on `develop`
+- [ ] Manual smoke test performed
+- [ ] Changelog reviewed
+- [ ] Version bump applied (package.json, infra) if needed
+
+## Architecture checklist
+
+- [ ] No breaking changes to public API without a major version bump
+- [ ] DynamoDB schema changes are backward-compatible
+
+## Branch checklist
+
+- [x] PR targets `release/` branch (not `main` directly)
+- [x] Release branch created from last stable tag
+
+---
+
+## Reviewer checklist
+
+- [ ] All intended features are included
+- [ ] No unintended commits are included
+- [ ] Release notes are accurate and complete
+TMPL
+          printf '\n---\n🤖 Auto-PR after CI passed on `develop`. Target: `%s`.\n' \
+            "$RELEASE_BRANCH" >> /tmp/pr-body.md
+
+          gh pr create \
+            --repo  "$REPO" \
+            --head  develop \
+            --base  "$RELEASE_BRANCH" \
+            --title "release: ${NEXT_VER}" \
+            --label "develop→release" \
+            --body-file /tmp/pr-body.md
+
+      # ── Case 3: release/* → main ─────────────────────────────────────────────
+      - name: release/* → main
+        if: startsWith(env.BRANCH, 'release/')
+        run: |
+          VERSION=$(echo "$BRANCH" | sed 's|release/||')
+
+          EXISTING=$(gh pr list \
+            --repo "$REPO" --head "$BRANCH" --base main \
+            --state open --json number --jq '.[0].number')
+          if [ -n "$EXISTING" ]; then
+            echo "PR #${EXISTING} already exists for ${BRANCH} → main"
+            exit 0
+          fi
+
+          # Build changelog since last tag
+          git fetch --tags --quiet
+          LAST_TAG=$(git tag --sort=-version:refname \
+            | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -1)
+          if [ -z "$LAST_TAG" ]; then
+            RANGE="$(git rev-list --max-parents=0 HEAD)..HEAD"
+          else
+            RANGE="${LAST_TAG}..HEAD"
+          fi
+
+          FEATURES=$(git log "$RANGE" --pretty=format:"- %s (%h)" --no-merges 2>/dev/null \
+            | grep "^- feat" || true)
+          FIXES=$(git log "$RANGE" --pretty=format:"- %s (%h)" --no-merges 2>/dev/null \
+            | grep "^- fix" || true)
+          OTHERS=$(git log "$RANGE" --pretty=format:"- %s (%h)" --no-merges 2>/dev/null \
+            | grep -vE "^- (feat|fix)" | grep "^- " || true)
+
+          {
+            printf '## Release %s → main\n\n' "$VERSION"
+            printf '### Changelog\n\n'
+            if [ -n "$FEATURES" ]; then
+              printf '#### Features\n%s\n\n' "$FEATURES"
+            fi
+            if [ -n "$FIXES" ]; then
+              printf '#### Bug Fixes\n%s\n\n' "$FIXES"
+            fi
+            if [ -n "$OTHERS" ]; then
+              printf '#### Other\n%s\n\n' "$OTHERS"
+            fi
+            if [ -z "$FEATURES" ] && [ -z "$FIXES" ] && [ -z "$OTHERS" ]; then
+              printf '_No conventional commits found in range `%s`._\n\n' "$RANGE"
+            fi
+          } > /tmp/pr-body.md
+
+          cat >> /tmp/pr-body.md << 'TMPL'
+## Type of change
+
+- [x] Release
+
+## Technical checklist
+
+- [x] CI passed ✅ on release branch
+- [ ] Changelog reviewed and accurate
+- [ ] Tag `vX.Y.Z` will be created on merge (via `release.yml`)
+- [ ] `develop` will be synced post-merge
+
+## Architecture checklist
+
+- [ ] No breaking changes without a version bump
+- [ ] DynamoDB migrations are backward-compatible
+
+---
+
+## Reviewer checklist
+
+- [ ] Changelog is complete and accurate
+- [ ] All regression tests pass on the release branch
+- [ ] No sensitive data logged or exposed
+- [ ] Ready to tag and deploy
+TMPL
+          printf '\n---\n🤖 Auto-PR after CI passed on `%s`.\n' "$BRANCH" \
+            >> /tmp/pr-body.md
+
+          gh pr create \
+            --repo  "$REPO" \
+            --head  "$BRANCH" \
+            --base  main \
+            --title "release: ${VERSION} → main" \
+            --label "release→main" \
+            --body-file /tmp/pr-body.md
