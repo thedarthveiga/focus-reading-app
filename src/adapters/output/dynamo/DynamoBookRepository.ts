@@ -1,6 +1,4 @@
 import {
-  GetCommand,
-  PutCommand,
   QueryCommand,
   TransactWriteCommand,
 } from '@aws-sdk/lib-dynamodb';
@@ -9,6 +7,7 @@ import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
 import { Book } from '../../../domain/entities/Book';
 import { EntityNotFoundError } from '../../../domain/errors/DomainError';
 import { BookRepositoryPort } from '../../../ports/driven/BookRepositoryPort';
+
 import { GSI1_INDEX, Keys } from './DynamoKeys';
 import { BookDynamoItem, BookMapper, ChapterDynamoItem } from './mappers/BookMapper';
 

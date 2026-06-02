@@ -1,20 +1,21 @@
 import Fastify, { FastifyInstance } from 'fastify';
+
 import { registerReadingSessionRoutes } from '../../src/adapters/input/rest/ReadingSessionController';
-import { PrepareReadingSessionInteractor } from '../../src/application/use-cases/PrepareReadingSessionInteractor';
-import { CalibrateWpmInteractor } from '../../src/application/use-cases/CalibrateWpmInteractor';
-import { InMemoryUserRepository } from '../../src/adapters/output/repositories/InMemoryUserRepository';
 import { InMemoryBookRepository } from '../../src/adapters/output/repositories/InMemoryBookRepository';
+import { InMemoryUserRepository } from '../../src/adapters/output/repositories/InMemoryUserRepository';
 import { UuidGenerator } from '../../src/adapters/output/repositories/UuidGenerator';
-import { User } from '../../src/domain/entities/User';
+import { CalibrateWpmInteractor } from '../../src/application/use-cases/CalibrateWpmInteractor';
+import { PrepareReadingSessionInteractor } from '../../src/application/use-cases/PrepareReadingSessionInteractor';
 import { Book } from '../../src/domain/entities/Book';
 import { Playlist } from '../../src/domain/entities/Playlist';
+import { User } from '../../src/domain/entities/User';
 import { WpmSpeed } from '../../src/domain/value-objects/WpmSpeed';
 import { SpotifyServicePort } from '../../src/ports/driven/SpotifyServicePort';
 
 // Stub Spotify — no real API calls in integration tests
 class StubSpotifyService implements SpotifyServicePort {
-  async findPlaylistFor(): Promise<Playlist> {
-    return Playlist.create('p-stub', 'spotify-stub-001', 'alpha-waves', 60, 'Stub Focus Mix');
+  findPlaylistFor(): Promise<Playlist> {
+    return Promise.resolve(Playlist.create('p-stub', 'spotify-stub-001', 'alpha-waves', 60, 'Stub Focus Mix'));
   }
 }
 
@@ -56,13 +57,11 @@ describe('POST /sessions/prepare', () => {
 
     expect(res.statusCode).toBe(201);
     const body = JSON.parse(res.body) as Record<string, unknown>;
-    expect(body).toMatchObject({
-      sessionId: expect.any(String),
-      estimatedMinutes: expect.any(Number),
-      spotifyPlaylistId: 'spotify-stub-001',
-      focusType: 'alpha-waves',
-      chapterTitle: 'The Surprising Power',
-    });
+    expect(typeof body['sessionId']).toBe('string');
+    expect(typeof body['estimatedMinutes']).toBe('number');
+    expect(body['spotifyPlaylistId']).toBe('spotify-stub-001');
+    expect(body['focusType']).toBe('alpha-waves');
+    expect(body['chapterTitle']).toBe('The Surprising Power');
   });
 
   it('returns 404 for unknown user', async () => {

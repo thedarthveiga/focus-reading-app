@@ -1,14 +1,14 @@
-import { PrepareReadingSessionInteractor } from '../../../src/application/use-cases/PrepareReadingSessionInteractor';
 import { CalibrateWpmInteractor } from '../../../src/application/use-cases/CalibrateWpmInteractor';
-import { User } from '../../../src/domain/entities/User';
+import { PrepareReadingSessionInteractor } from '../../../src/application/use-cases/PrepareReadingSessionInteractor';
 import { Book } from '../../../src/domain/entities/Book';
 import { Playlist } from '../../../src/domain/entities/Playlist';
-import { WpmSpeed } from '../../../src/domain/value-objects/WpmSpeed';
+import { User } from '../../../src/domain/entities/User';
 import { EntityNotFoundError } from '../../../src/domain/errors/DomainError';
-import { UserRepositoryPort } from '../../../src/ports/driven/UserRepositoryPort';
+import { WpmSpeed } from '../../../src/domain/value-objects/WpmSpeed';
 import { BookRepositoryPort } from '../../../src/ports/driven/BookRepositoryPort';
-import { SpotifyServicePort } from '../../../src/ports/driven/SpotifyServicePort';
 import { IdGeneratorPort } from '../../../src/ports/driven/IdGeneratorPort';
+import { SpotifyServicePort } from '../../../src/ports/driven/SpotifyServicePort';
+import { UserRepositoryPort } from '../../../src/ports/driven/UserRepositoryPort';
 
 // --- Test fixtures ---
 
@@ -79,7 +79,9 @@ describe('PrepareReadingSessionInteractor', () => {
 
     await interactor.execute({ userId: 'u-1', bookId: 'b-1', chapterNumber: 1 });
 
+    // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(userRepo.findById).toHaveBeenCalledWith('u-1');
+    // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(bookRepo.findById).toHaveBeenCalledWith('b-1');
   });
 
@@ -94,6 +96,7 @@ describe('PrepareReadingSessionInteractor', () => {
 
     await interactor.execute({ userId: 'u-1', bookId: 'b-1', chapterNumber: 1 });
 
+    // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(spotify.findPlaylistFor).toHaveBeenCalledWith(
       expect.objectContaining({ chapterMood: 'reflective' }),
     );
@@ -158,6 +161,7 @@ describe('CalibrateWpmInteractor', () => {
     });
 
     expect(result.value).toBe(250);
+    // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(userRepo.save).toHaveBeenCalledTimes(1);
   });
 

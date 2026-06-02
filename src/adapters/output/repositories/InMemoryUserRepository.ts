@@ -9,14 +9,15 @@ export class InMemoryUserRepository implements UserRepositoryPort {
     initialUsers.forEach(u => this.store.set(u.id, u));
   }
 
-  async findById(id: string): Promise<User> {
+  findById(id: string): Promise<User> {
     const user = this.store.get(id);
     if (!user) throw new EntityNotFoundError('User', id);
-    return user;
+    return Promise.resolve(user);
   }
 
-  async save(user: User): Promise<void> {
+  save(user: User): Promise<void> {
     this.store.set(user.id, user);
+    return Promise.resolve();
   }
 
   /** Test helper */

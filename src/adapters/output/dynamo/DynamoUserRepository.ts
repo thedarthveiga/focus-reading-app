@@ -1,13 +1,13 @@
 import {
   GetCommand,
   PutCommand,
-  TransactWriteCommand,
 } from '@aws-sdk/lib-dynamodb';
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
 
 import { User } from '../../../domain/entities/User';
 import { EntityNotFoundError } from '../../../domain/errors/DomainError';
 import { UserRepositoryPort } from '../../../ports/driven/UserRepositoryPort';
-import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
+
 import { Keys } from './DynamoKeys';
 import { UserDynamoItem, UserMapper } from './mappers/UserMapper';
 

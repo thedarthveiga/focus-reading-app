@@ -9,20 +9,21 @@ export class InMemoryBookRepository implements BookRepositoryPort {
     initialBooks.forEach(b => this.store.set(b.id, b));
   }
 
-  async findById(id: string): Promise<Book> {
+  findById(id: string): Promise<Book> {
     const book = this.store.get(id);
     if (!book) throw new EntityNotFoundError('Book', id);
-    return book;
+    return Promise.resolve(book);
   }
 
-  async findByTitle(title: string): Promise<Book[]> {
+  findByTitle(title: string): Promise<Book[]> {
     const lower = title.toLowerCase();
-    return [...this.store.values()].filter(b =>
-      b.title.toLowerCase().includes(lower),
+    return Promise.resolve(
+      [...this.store.values()].filter(b => b.title.toLowerCase().includes(lower)),
     );
   }
 
-  async save(book: Book): Promise<void> {
+  save(book: Book): Promise<void> {
     this.store.set(book.id, book);
+    return Promise.resolve();
   }
 }
