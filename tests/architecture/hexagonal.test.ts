@@ -9,8 +9,8 @@
  *   adapters → can import from anywhere (they are the outermost layer)
  */
 
-import * as path from 'path';
 import * as fs from 'fs';
+import * as path from 'path';
 
 const SRC = path.resolve(__dirname, '../../src');
 

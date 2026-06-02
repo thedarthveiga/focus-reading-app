@@ -1,21 +1,23 @@
 import 'dotenv/config';
 
-import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
+import Fastify from 'fastify';
 
+import { CalibrateWpmInteractor } from '../../../application/use-cases/CalibrateWpmInteractor';
+import { PrepareReadingSessionInteractor } from '../../../application/use-cases/PrepareReadingSessionInteractor';
+import { BookRepositoryPort } from '../../../ports/driven/BookRepositoryPort';
+import { UserRepositoryPort } from '../../../ports/driven/UserRepositoryPort';
+import { DynamoBookRepository } from '../../output/dynamo/DynamoBookRepository';
 import { createDynamoClient, loadDynamoConfig } from '../../output/dynamo/DynamoClient';
 import { DynamoUserRepository } from '../../output/dynamo/DynamoUserRepository';
-import { DynamoBookRepository } from '../../output/dynamo/DynamoBookRepository';
-import { InMemoryUserRepository } from '../../output/repositories/InMemoryUserRepository';
-import { InMemoryBookRepository } from '../../output/repositories/InMemoryBookRepository';
 import { SpotifyApiAdapter } from '../../output/http/SpotifyApiAdapter';
+import { InMemoryBookRepository } from '../../output/repositories/InMemoryBookRepository';
+import { InMemoryUserRepository } from '../../output/repositories/InMemoryUserRepository';
 import { UuidGenerator } from '../../output/repositories/UuidGenerator';
-import { PrepareReadingSessionInteractor } from '../../../application/use-cases/PrepareReadingSessionInteractor';
-import { CalibrateWpmInteractor } from '../../../application/use-cases/CalibrateWpmInteractor';
+
 import { registerReadingSessionRoutes } from './ReadingSessionController';
-import { UserRepositoryPort } from '../../../ports/driven/UserRepositoryPort';
-import { BookRepositoryPort } from '../../../ports/driven/BookRepositoryPort';
+
 
 const PORT = Number(process.env.PORT ?? 3000);
 const HOST = process.env.HOST ?? '0.0.0.0';

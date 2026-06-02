@@ -1,11 +1,11 @@
-import { User } from '../../../src/domain/entities/User';
 import { Book } from '../../../src/domain/entities/Book';
 import { Playlist, MOOD_TO_FOCUS_MAP } from '../../../src/domain/entities/Playlist';
 import { ReadingSession } from '../../../src/domain/entities/ReadingSession';
-import { WpmSpeed } from '../../../src/domain/value-objects/WpmSpeed';
-import { ReadingDuration } from '../../../src/domain/value-objects/ReadingDuration';
-import { ReadingTimeCalculator, IMMERSION_BUFFER_FACTOR } from '../../../src/domain/services/ReadingTimeCalculator';
+import { User } from '../../../src/domain/entities/User';
 import { DomainError, InvalidValueError, EntityNotFoundError } from '../../../src/domain/errors/DomainError';
+import { ReadingTimeCalculator, IMMERSION_BUFFER_FACTOR } from '../../../src/domain/services/ReadingTimeCalculator';
+import { ReadingDuration } from '../../../src/domain/value-objects/ReadingDuration';
+import { WpmSpeed } from '../../../src/domain/value-objects/WpmSpeed';
 
 const defaultWpm = WpmSpeed.create(250, new Date(), 3);
 

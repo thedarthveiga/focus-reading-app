@@ -1,7 +1,7 @@
 import { ReadingSession } from '../../domain/entities/ReadingSession';
 import { ReadingTimeCalculator } from '../../domain/services/ReadingTimeCalculator';
-import { IdGeneratorPort } from '../../ports/driven/IdGeneratorPort';
 import { BookRepositoryPort } from '../../ports/driven/BookRepositoryPort';
+import { IdGeneratorPort } from '../../ports/driven/IdGeneratorPort';
 import { SpotifyServicePort } from '../../ports/driven/SpotifyServicePort';
 import { UserRepositoryPort } from '../../ports/driven/UserRepositoryPort';
 import {

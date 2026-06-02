@@ -1,6 +1,7 @@
 import { DomainError } from '../errors/DomainError';
-import { Playlist } from './Playlist';
 import { SessionStatus } from '../value-objects/SessionStatus';
+
+import { Playlist } from './Playlist';
 
 export class ReadingSession {
   private constructor(

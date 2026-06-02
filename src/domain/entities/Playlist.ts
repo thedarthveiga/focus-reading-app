@@ -1,4 +1,5 @@
 import { InvalidValueError } from '../errors/DomainError';
+
 import { ChapterMood } from './Book';
 
 export const FOCUS_TYPES = ['alpha-waves', 'ambient', 'binaural-beats'] as const;

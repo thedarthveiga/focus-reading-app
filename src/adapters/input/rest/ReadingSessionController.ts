@@ -2,8 +2,8 @@ import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 
 import { DomainError, EntityNotFoundError } from '../../../domain/errors/DomainError';
-import { PrepareReadingSessionUseCase } from '../../../ports/driving/PrepareReadingSessionUseCase';
 import { CalibrateWpmUseCase } from '../../../ports/driving/CalibrateWpmUseCase';
+import { PrepareReadingSessionUseCase } from '../../../ports/driving/PrepareReadingSessionUseCase';
 
 const PrepareSessionSchema = z.object({
   userId: z.string().min(1),
