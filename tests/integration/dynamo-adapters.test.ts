@@ -14,13 +14,13 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
 
-import { DynamoUserRepository } from '../../../src/adapters/output/dynamo/DynamoUserRepository';
-import { DynamoBookRepository } from '../../../src/adapters/output/dynamo/DynamoBookRepository';
-import { User } from '../../../src/domain/entities/User';
-import { Book } from '../../../src/domain/entities/Book';
-import { WpmSpeed } from '../../../src/domain/value-objects/WpmSpeed';
-import { EntityNotFoundError } from '../../../src/domain/errors/DomainError';
-import { createDynamoClient, loadDynamoConfig } from '../../../src/adapters/output/dynamo/DynamoClient';
+import { DynamoUserRepository } from '../../src/adapters/output/dynamo/DynamoUserRepository';
+import { DynamoBookRepository } from '../../src/adapters/output/dynamo/DynamoBookRepository';
+import { User } from '../../src/domain/entities/User';
+import { Book } from '../../src/domain/entities/Book';
+import { WpmSpeed } from '../../src/domain/value-objects/WpmSpeed';
+import { EntityNotFoundError } from '../../src/domain/errors/DomainError';
+import { createDynamoClient, loadDynamoConfig } from '../../src/adapters/output/dynamo/DynamoClient';
 
 const SKIP = !process.env.DYNAMO_ENDPOINT;
 const describeOrSkip = SKIP ? describe.skip : describe;

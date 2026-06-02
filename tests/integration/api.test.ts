@@ -1,15 +1,15 @@
 import Fastify, { FastifyInstance } from 'fastify';
-import { registerReadingSessionRoutes } from '../../../src/adapters/input/rest/ReadingSessionController';
-import { PrepareReadingSessionInteractor } from '../../../src/application/use-cases/PrepareReadingSessionInteractor';
-import { CalibrateWpmInteractor } from '../../../src/application/use-cases/CalibrateWpmInteractor';
-import { InMemoryUserRepository } from '../../../src/adapters/output/repositories/InMemoryUserRepository';
-import { InMemoryBookRepository } from '../../../src/adapters/output/repositories/InMemoryBookRepository';
-import { UuidGenerator } from '../../../src/adapters/output/repositories/UuidGenerator';
-import { User } from '../../../src/domain/entities/User';
-import { Book } from '../../../src/domain/entities/Book';
-import { Playlist } from '../../../src/domain/entities/Playlist';
-import { WpmSpeed } from '../../../src/domain/value-objects/WpmSpeed';
-import { SpotifyServicePort } from '../../../src/ports/driven/SpotifyServicePort';
+import { registerReadingSessionRoutes } from '../../src/adapters/input/rest/ReadingSessionController';
+import { PrepareReadingSessionInteractor } from '../../src/application/use-cases/PrepareReadingSessionInteractor';
+import { CalibrateWpmInteractor } from '../../src/application/use-cases/CalibrateWpmInteractor';
+import { InMemoryUserRepository } from '../../src/adapters/output/repositories/InMemoryUserRepository';
+import { InMemoryBookRepository } from '../../src/adapters/output/repositories/InMemoryBookRepository';
+import { UuidGenerator } from '../../src/adapters/output/repositories/UuidGenerator';
+import { User } from '../../src/domain/entities/User';
+import { Book } from '../../src/domain/entities/Book';
+import { Playlist } from '../../src/domain/entities/Playlist';
+import { WpmSpeed } from '../../src/domain/value-objects/WpmSpeed';
+import { SpotifyServicePort } from '../../src/ports/driven/SpotifyServicePort';
 
 // Stub Spotify — no real API calls in integration tests
 class StubSpotifyService implements SpotifyServicePort {

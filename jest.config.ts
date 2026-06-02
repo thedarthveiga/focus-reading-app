@@ -16,7 +16,7 @@ const config: Config = {
     '!src/**/*.d.ts',
     '!src/adapters/input/rest/server.ts',
   ],
-  coverageThresholds: {
+  coverageThreshold: {
     global: {
       branches: 80,
       functions: 85,
