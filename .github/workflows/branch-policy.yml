@@ -1,0 +1,50 @@
+name: Branch Policy
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    branches: [develop, 'release/**', main]
+
+jobs:
+  validate-branch-policy:
+    name: Validate branch naming policy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check branch policy
+        env:
+          HEAD: ${{ github.head_ref }}
+          BASE: ${{ github.base_ref }}
+        run: |
+          echo "PR: $HEAD → $BASE"
+
+          fail() {
+            echo "::error::$1"
+            exit 1
+          }
+
+          # PRs targeting develop must come from feature/, bugfix/, or hotfix/
+          if [ "$BASE" = "develop" ]; then
+            if echo "$HEAD" | grep -qE '^(feature|bugfix|hotfix)/.+'; then
+              echo "✓ '$HEAD' is a valid source for develop."
+            else
+              fail "PRs to 'develop' must come from a branch with prefix 'feature/', 'bugfix/', or 'hotfix/'. Got: '$HEAD'"
+            fi
+          fi
+
+          # PRs targeting release/* must come from develop
+          if echo "$BASE" | grep -qE '^release/'; then
+            if [ "$HEAD" = "develop" ]; then
+              echo "✓ '$HEAD' is a valid source for $BASE."
+            else
+              fail "PRs to 'release/*' must come from 'develop'. Got: '$HEAD'"
+            fi
+          fi
+
+          # PRs targeting main must come from release/*
+          if [ "$BASE" = "main" ]; then
+            if echo "$HEAD" | grep -qE '^release/'; then
+              echo "✓ '$HEAD' is a valid source for main."
+            else
+              fail "PRs to 'main' must come from a 'release/*' branch. Got: '$HEAD'"
+            fi
+          fi

@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main, develop]
+    branches: [develop, 'release/**', main]
   pull_request:
-    branches: [main, develop]
+    branches: [develop, 'release/**', main]
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -54,7 +54,7 @@ jobs:
       - run: npm ci
       - run: npm run test:unit
 
-  # ─── Integration Tests (HTTP — mocked adapters) ─────────────────────────────
+  # ─── Integration Tests (HTTP — stub adapters) ───────────────────────────────
   integration-tests:
     name: Integration tests (in-memory)
     runs-on: ubuntu-latest

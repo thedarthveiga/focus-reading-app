@@ -1,0 +1,83 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  # ─── Run full CI suite on the release tag ───────────────────────────────────
+  ci:
+    name: CI (release)
+    uses: ./.github/workflows/ci.yml
+
+  # ─── Create GitHub Release with changelog ───────────────────────────────────
+  release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: ci
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate changelog from commits
+        id: changelog
+        run: |
+          # Get previous tag (or first commit if no previous tag)
+          PREV_TAG=$(git tag --sort=-version:refname | grep -E '^v[0-9]' | sed -n '2p')
+          if [ -z "$PREV_TAG" ]; then
+            PREV_TAG=$(git rev-list --max-parents=0 HEAD)
+            RANGE="$PREV_TAG..HEAD"
+          else
+            RANGE="$PREV_TAG..HEAD"
+          fi
+
+          echo "Generating changelog from $RANGE"
+
+          CHANGELOG=$(git log "$RANGE" \
+            --pretty=format:"- %s (%h)" \
+            --no-merges \
+            | grep -E "^- (feat|fix|refactor|perf|docs|test|chore|ci)" \
+            | sort -t: -k1,1 \
+            || echo "- No conventional commits found in this range")
+
+          # Group by type
+          FEATURES=$(echo "$CHANGELOG" | grep "^- feat" || true)
+          FIXES=$(echo "$CHANGELOG" | grep "^- fix" || true)
+          OTHERS=$(echo "$CHANGELOG" | grep -vE "^- (feat|fix)" || true)
+
+          BODY=""
+          [ -n "$FEATURES" ] && BODY="${BODY}### Features\n${FEATURES}\n\n"
+          [ -n "$FIXES" ]    && BODY="${BODY}### Bug Fixes\n${FIXES}\n\n"
+          [ -n "$OTHERS" ]   && BODY="${BODY}### Other Changes\n${OTHERS}\n\n"
+          [ -z "$BODY" ]     && BODY="No notable changes.\n"
+
+          # Write multiline output
+          {
+            echo "body<<EOF"
+            printf "%b" "$BODY"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
+          body: ${{ steps.changelog.outputs.body }}
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-rc') || contains(github.ref_name, '-beta') || contains(github.ref_name, '-alpha') }}
+          files: dist/**

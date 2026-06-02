@@ -98,6 +98,64 @@ Add these in `Settings → Secrets → Actions`:
 - `SPOTIFY_CLIENT_ID`
 - `SPOTIFY_CLIENT_SECRET`
 
+## CI/CD e Deploy
+
+### GitHub Actions workflows
+
+| Workflow | Trigger | Purpose |
+|---|---|---|
+| `ci.yml` | push/PR em `develop`, `release/*`, `main` | Type-check, lint, testes, coverage, build, Docker |
+| `branch-policy.yml` | todo PR | Valida que a branch de origem segue o GitFlow |
+| `release.yml` | push de tag `v*` | CI completo + cria GitHub Release com changelog |
+| `deploy.yml` | push de tag `v*` | Build Docker → push ECR → deploy ECS Fargate |
+| `deploy-infra.yml` | push em `main` em `infra/terraform/**` | Provisiona infraestrutura com Terraform |
+
+### Secrets necessários no GitHub
+
+Configure em `Settings → Secrets and variables → Actions`:
+
+**Aplicação:**
+
+| Secret | Descrição |
+|---|---|
+| `SPOTIFY_CLIENT_ID` | Client ID da Spotify Web API |
+| `SPOTIFY_CLIENT_SECRET` | Client Secret da Spotify Web API |
+
+**AWS / Deploy:**
+
+| Secret | Descrição |
+|---|---|
+| `AWS_ACCOUNT_ID` | ID da conta AWS (ex: `123456789012`) |
+| `AWS_REGION` | Região AWS (ex: `us-east-1`) |
+| `ECR_REPOSITORY` | Nome do repositório ECR (ex: `focus-reading-api`) |
+| `ECS_CLUSTER` | Nome do cluster ECS (ex: `focus-reading-cluster`) |
+| `ECS_SERVICE` | Nome do serviço ECS (ex: `focus-reading-service`) |
+| `TASK_DEFINITION` | Nome da task definition ECS (ex: `focus-reading-task`) |
+| `APP_DOMAIN` | Domínio público da aplicação para smoke test (ex: `api.focusreading.com`) |
+
+**Terraform (infra):**
+
+| Secret | Descrição |
+|---|---|
+| `TF_STATE_BUCKET` | Nome do bucket S3 para Terraform state |
+
+### OIDC (sem chaves AWS hardcoded)
+
+O deploy usa OIDC para autenticação com AWS. Crie uma IAM Role com a trust policy:
+
+```json
+{
+  "Effect": "Allow",
+  "Principal": { "Federated": "arn:aws:iam::<ACCOUNT_ID>:oidc-provider/token.actions.githubusercontent.com" },
+  "Action": "sts:AssumeRoleWithWebIdentity",
+  "Condition": {
+    "StringLike": { "token.actions.githubusercontent.com:sub": "repo:<owner>/<repo>:*" }
+  }
+}
+```
+
+O ARN da role é `arn:aws:iam::<AWS_ACCOUNT_ID>:role/github-actions-deploy`.
+
 ## Swapping the backend language
 
 Because the domain and ports are pure TypeScript interfaces with zero framework coupling, migrating to Go or Python means:
