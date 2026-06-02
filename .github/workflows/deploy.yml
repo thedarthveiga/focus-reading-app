@@ -69,7 +69,7 @@ jobs:
       contents: read
     environment:
       name: production
-      url: https://${{ secrets.APP_DOMAIN }}
+      url: https://${{ vars.APP_DOMAIN }}
     steps:
       - uses: actions/checkout@v4
 
