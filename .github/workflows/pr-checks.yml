@@ -22,6 +22,7 @@ jobs:
             chore
             ci
             perf
+            release
           requireScope: false
 
   size-check:
