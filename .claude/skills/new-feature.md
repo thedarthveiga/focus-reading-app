@@ -70,3 +70,7 @@ fix/something                                        ← must use bugfix/, not f
 ## Protected branches
 
 `develop` and `main` are protected branches — **never edit files or commit directly on them**, even for trivial changes. The repo enforces GitFlow via `branch-policy.yml`, which validates that every PR originates from a valid branch type. Direct commits to protected branches violate this policy and will be rejected.
+
+## PR Opening
+
+Never open PRs manually. The `auto-pr.yml` workflow creates the PR automatically after CI passes on the feature branch. After pushing, just inform the user to wait for the CI to complete on GitHub Actions at `github.com/thedarthveiga/focus-reading-app/actions`.
