@@ -57,8 +57,8 @@ Every push and PR runs:
 Run once after creating your GitHub repo:
 
 ```bash
-chmod +x setup-branch-protection.sh
-./setup-branch-protection.sh <your-github-username> <repo-name>
+chmod +x devtools/scripts/setup-branch-protection.sh
+./devtools/scripts/setup-branch-protection.sh <your-github-username> <repo-name>
 ```
 
 This protects `main` and `develop`: all CI checks required, 1 reviewer required, force-push disabled, linear history enforced.
@@ -110,7 +110,7 @@ Add these in `Settings → Secrets → Actions`:
 | `deploy.yml` | push de tag `v*` | Build Docker → push ECR → deploy ECS Fargate |
 | `deploy-infra.yml` | push em `main` em `infra/terraform/**` | Provisiona infraestrutura com Terraform |
 
-> **TODO antes do go-live:** configurar required status checks nas branch protection rules do GitHub para `main` e `develop` com os nomes finais dos jobs do CI. Comando: ver `setup-branch-protection.sh`
+> **TODO antes do go-live:** configurar required status checks nas branch protection rules do GitHub para `main` e `develop` com os nomes finais dos jobs do CI. Comando: ver `devtools/scripts/setup-branch-protection.sh`
 
 ### Secrets necessários no GitHub
 
