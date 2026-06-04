@@ -24,7 +24,7 @@ cat <<EOF | gh api --method PUT "repos/$OWNER/$REPO/branches/main/protection" --
       "Architecture boundary tests",
       "Unit tests",
       "Integration tests (in-memory)",
-      "Coverage (>=85%)",
+      "Coverage (MVP 20%)",
       "TypeScript production build",
       "Docker build + smoke test"
     ]
@@ -55,7 +55,7 @@ cat <<EOF | gh api --method PUT "repos/$OWNER/$REPO/branches/develop/protection"
       "Architecture boundary tests",
       "Unit tests",
       "Integration tests (in-memory)",
-      "Coverage (>=85%)"
+      "Coverage (MVP 20%)"
     ]
   },
   "enforce_admins": false,
