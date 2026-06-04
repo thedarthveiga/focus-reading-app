@@ -110,6 +110,8 @@ Add these in `Settings → Secrets → Actions`:
 | `deploy.yml` | push de tag `v*` | Build Docker → push ECR → deploy ECS Fargate |
 | `deploy-infra.yml` | push em `main` em `infra/terraform/**` | Provisiona infraestrutura com Terraform |
 
+> **TODO antes do go-live:** configurar required status checks nas branch protection rules do GitHub para `main` e `develop` com os nomes finais dos jobs do CI. Comando: ver `setup-branch-protection.sh`
+
 ### Secrets necessários no GitHub
 
 Configure em `Settings → Secrets and variables → Actions`:
