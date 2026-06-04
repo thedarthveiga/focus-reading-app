@@ -29,7 +29,7 @@ cat <<EOF | gh api --method PUT "repos/$OWNER/$REPO/branches/main/protection" --
       "Docker build + smoke test"
     ]
   },
-  "enforce_admins": true,
+  "enforce_admins": false,
   "required_pull_request_reviews": {
     "required_approving_review_count": 1,
     "dismiss_stale_reviews": true,
