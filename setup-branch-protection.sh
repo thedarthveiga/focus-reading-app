@@ -17,7 +17,7 @@ echo "→ Configuring branch protection for: main"
 gh api \
   --method PUT \
   "repos/$OWNER/$REPO/branches/main/protection" \
-  --field 'required_status_checks={"strict":true,"contexts":["Type-check, Lint & Format","Architecture boundary tests","Unit tests","Integration tests (in-memory)","Coverage (>=85%)","TypeScript production build","Docker build + smoke test"]}' \
+  --field 'required_status_checks={"strict":true,"contexts":["Validate branch naming policy","Type-check, Lint & Format","Architecture boundary tests","Unit tests","Integration tests (in-memory)","Coverage (>=85%)","TypeScript production build","Docker build + smoke test"]}' \
   --field enforce_admins=true \
   --field 'required_pull_request_reviews={"required_approving_review_count":1,"dismiss_stale_reviews":true,"require_code_owner_reviews":true}' \
   --field restrictions=null \
@@ -31,7 +31,7 @@ echo "→ Configuring branch protection for: develop"
 gh api \
   --method PUT \
   "repos/$OWNER/$REPO/branches/develop/protection" \
-  --field 'required_status_checks={"strict":true,"contexts":["Type-check, Lint & Format","Architecture boundary tests","Unit tests","Integration tests (in-memory)","Coverage (>=85%)"]}' \
+  --field 'required_status_checks={"strict":true,"contexts":["Validate branch naming policy","Type-check, Lint & Format","Architecture boundary tests","Unit tests","Integration tests (in-memory)","Coverage (>=85%)"]}' \
   --field enforce_admins=false \
   --field 'required_pull_request_reviews={"required_approving_review_count":1,"dismiss_stale_reviews":true,"require_code_owner_reviews":false}' \
   --field restrictions=null \
