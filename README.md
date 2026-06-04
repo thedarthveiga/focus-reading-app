@@ -164,4 +164,4 @@ Because the domain and ports are pure TypeScript interfaces with zero framework 
 
 1. Rewrite `adapters/` in the target language implementing the same port contracts
 2. The `domain/` and `ports/` definitions serve as the specification
-3. The architecture tests define what must hold true in any implementation
+3. The architecture tests define what must hold true in any implementation.
