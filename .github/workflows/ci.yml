@@ -9,6 +9,8 @@ on:
       - 'release/**'
       - main
       - 'feature/**'
+      - 'bugfix/**'
+      - 'hotfix/**'
   pull_request:
     branches:
       - develop
