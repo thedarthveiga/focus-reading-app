@@ -30,6 +30,7 @@
     "docker:logs": "docker compose logs -f api"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.100.1",
     "@aws-sdk/client-dynamodb": "^3.540.0",
     "@aws-sdk/lib-dynamodb": "^3.540.0",
     "@fastify/cors": "^11.2.0",
