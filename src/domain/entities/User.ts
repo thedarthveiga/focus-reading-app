@@ -16,6 +16,9 @@ export class User {
     readonly email: string,
     readonly wpmSpeed: WpmSpeed,
     readonly createdAt: Date,
+    readonly spotifyAccessToken: string | null,
+    readonly spotifyRefreshToken: string | null,
+    readonly spotifyTokenExpiresAt: Date | null,
   ) {}
 
   static create(id: string, email: string, wpmSpeed: WpmSpeed): User {
@@ -27,14 +30,49 @@ export class User {
       email.toLowerCase().trim(),
       wpmSpeed,
       new Date(),
+      null,
+      null,
+      null,
     );
   }
 
   withUpdatedWpm(wpmSpeed: WpmSpeed): User {
-    return new User(this.id, this.email, wpmSpeed, this.createdAt);
+    return new User(
+      this.id,
+      this.email,
+      wpmSpeed,
+      this.createdAt,
+      this.spotifyAccessToken,
+      this.spotifyRefreshToken,
+      this.spotifyTokenExpiresAt,
+    );
+  }
+
+  withSpotifyTokens(
+    accessToken: string,
+    refreshToken: string,
+    expiresAt: Date,
+  ): User {
+    return new User(
+      this.id,
+      this.email,
+      this.wpmSpeed,
+      this.createdAt,
+      accessToken,
+      refreshToken,
+      expiresAt,
+    );
   }
 
   isReadyForSession(): boolean {
     return this.wpmSpeed.isCalibrated();
+  }
+
+  hasValidSpotifyToken(): boolean {
+    return (
+      this.spotifyAccessToken !== null &&
+      this.spotifyTokenExpiresAt !== null &&
+      this.spotifyTokenExpiresAt > new Date()
+    );
   }
 }

@@ -22,3 +22,13 @@ export class InvalidValueError extends DomainError {
     this.name = "InvalidValueError";
   }
 }
+
+export class ExternalServiceError extends DomainError {
+  constructor(service: string, reason: string) {
+    super(
+      `External service error [${service}]: ${reason}`,
+      "EXTERNAL_SERVICE_ERROR",
+    );
+    this.name = "ExternalServiceError";
+  }
+}
