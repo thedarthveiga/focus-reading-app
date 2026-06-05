@@ -59,7 +59,7 @@ function handleError(
       stack: (err as Error).stack,
       code: "UNKNOWN",
     },
-    "ReadingSessionController - unhandled error",
+    "ReadingSessionController.handleError - error occurred",
   );
   return reply.status(500).send({
     error: "Internal server error",

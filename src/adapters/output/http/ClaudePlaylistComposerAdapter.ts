@@ -65,6 +65,7 @@ export class ClaudePlaylistComposerAdapter implements AIPlaylistComposerPort {
           correlationId,
           error: (err as Error).message,
           stack: (err as Error).stack,
+          code: (err as { code?: string }).code ?? "UNKNOWN",
         },
         "ClaudePlaylistComposerAdapter.estimateWordCount - error occurred",
       );
@@ -160,6 +161,7 @@ Suggest 6-8 tracks. All must be real, instrumental, and available on Spotify.`,
           correlationId,
           error: (err as Error).message,
           stack: (err as Error).stack,
+          code: (err as { code?: string }).code ?? "UNKNOWN",
         },
         "ClaudePlaylistComposerAdapter.composePlaylist - error occurred",
       );

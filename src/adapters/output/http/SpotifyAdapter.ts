@@ -151,7 +151,7 @@ export class SpotifyAdapter implements SpotifyAuthPort, SpotifyMusicPort {
     );
 
     try {
-      const token = await this.getClientCredentialsToken();
+      const token = await this.getClientCredentialsToken(correlationId);
       const query = encodeURIComponent(`track:${title} artist:${artist}`);
       const res = await fetch(
         `${this.baseUrl}/search?q=${query}&type=track&limit=1`,
@@ -293,7 +293,9 @@ export class SpotifyAdapter implements SpotifyAuthPort, SpotifyMusicPort {
 
   // ── Private ────────────────────────────────────────────────────────────────
 
-  private async getClientCredentialsToken(): Promise<string> {
+  private async getClientCredentialsToken(
+    correlationId: string,
+  ): Promise<string> {
     if (
       this.clientCredentialsToken &&
       Date.now() < this.clientCredentialsExpiresAt
@@ -301,6 +303,10 @@ export class SpotifyAdapter implements SpotifyAuthPort, SpotifyMusicPort {
       return this.clientCredentialsToken;
     }
 
+    logger.info(
+      { correlationId },
+      "SpotifyAdapter.getClientCredentialsToken - calling Spotify API",
+    );
     const credentials = Buffer.from(
       `${this.clientId}:${this.clientSecret}`,
     ).toString("base64");
@@ -324,6 +330,10 @@ export class SpotifyAdapter implements SpotifyAuthPort, SpotifyMusicPort {
     this.clientCredentialsToken = data.access_token;
     this.clientCredentialsExpiresAt =
       Date.now() + (data.expires_in - 60) * 1000;
+    logger.info(
+      { correlationId },
+      "SpotifyAdapter.getClientCredentialsToken - token obtained",
+    );
     return this.clientCredentialsToken;
   }
 }
