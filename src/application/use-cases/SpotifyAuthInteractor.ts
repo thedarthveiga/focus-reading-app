@@ -83,6 +83,15 @@ export class SpotifyAuthInteractor implements SpotifyAuthUseCase {
       };
     } catch (err) {
       if (err instanceof SyntaxError) {
+        logger.error(
+          {
+            correlationId,
+            error: (err as Error).message,
+            stack: (err as Error).stack,
+            code: 'UNKNOWN',
+          },
+          'SpotifyAuthInteractor.exchangeCode - error occurred',
+        );
         throw new ExternalServiceError("Spotify", "Invalid state parameter");
       }
       logger.error(

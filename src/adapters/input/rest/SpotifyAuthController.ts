@@ -48,7 +48,7 @@ function handleError(
       stack: (err as Error).stack,
       code: "UNKNOWN",
     },
-    "SpotifyAuthController - unhandled error",
+    "SpotifyAuthController.handleError - error occurred",
   );
   return reply.status(500).send({
     error: "Internal server error",
