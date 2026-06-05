@@ -1,23 +1,29 @@
 import { Book } from "../../../src/domain/entities/Book";
-import {
-  Playlist,
-  MOOD_TO_FOCUS_MAP,
-} from "../../../src/domain/entities/Playlist";
 import { ReadingSession } from "../../../src/domain/entities/ReadingSession";
 import { User } from "../../../src/domain/entities/User";
 import {
   DomainError,
-  InvalidValueError,
   EntityNotFoundError,
+  ExternalServiceError,
+  InvalidValueError,
 } from "../../../src/domain/errors/DomainError";
 import {
   ReadingTimeCalculator,
   IMMERSION_BUFFER_FACTOR,
 } from "../../../src/domain/services/ReadingTimeCalculator";
+import { GeneratedPlaylist } from "../../../src/domain/value-objects/GeneratedPlaylist";
 import { ReadingDuration } from "../../../src/domain/value-objects/ReadingDuration";
 import { WpmSpeed } from "../../../src/domain/value-objects/WpmSpeed";
 
 const defaultWpm = WpmSpeed.create(250, new Date(), 3);
+
+const stubPlaylist: GeneratedPlaylist = {
+  spotifyPlaylistId: "sp-abc",
+  spotifyPlaylistUrl: "https://open.spotify.com/playlist/abc",
+  name: "Focus Mix",
+  tracks: [{ title: "Experience", artist: "Ludovico Einaudi" }],
+  durationMinutes: 30,
+};
 
 describe("WpmSpeed", () => {
   it("creates valid WPM speed", () => {
@@ -82,40 +88,39 @@ describe("User", () => {
     const newWpm = WpmSpeed.create(400, new Date(), 4);
     const updated = user.withUpdatedWpm(newWpm);
     expect(updated.wpmSpeed.value).toBe(400);
-    expect(user.wpmSpeed.value).toBe(250); // original unchanged
+    expect(user.wpmSpeed.value).toBe(250);
+  });
+
+  it("stores Spotify tokens via withSpotifyTokens", () => {
+    const user = User.create("u-1", "r@e.com", defaultWpm);
+    expect(user.hasValidSpotifyToken()).toBe(false);
+    const expiresAt = new Date(Date.now() + 3600 * 1000);
+    const updated = user.withSpotifyTokens("tok", "ref", expiresAt);
+    expect(updated.hasValidSpotifyToken()).toBe(true);
+    expect(updated.spotifyAccessToken).toBe("tok");
   });
 });
 
 describe("Book", () => {
-  const chapters = [
-    {
-      number: 1,
-      title: "The Beginning",
-      wordCount: 3000,
-      mood: "calm" as const,
-    },
-    { number: 2, title: "The Storm", wordCount: 5000, mood: "tense" as const },
-  ];
-
   it("creates a valid book", () => {
-    const book = Book.create("b-1", "Deep Focus", "Alice Author", chapters);
-    expect(book.totalWordCount).toBe(8000);
+    const book = Book.create("b-1", "Deep Focus", 1, "The Beginning");
+    expect(book.title).toBe("Deep Focus");
+    expect(book.chapterNumber).toBe(1);
+    expect(book.chapterTitle).toBe("The Beginning");
   });
 
-  it("retrieves a chapter by number", () => {
-    const book = Book.create("b-1", "Deep Focus", "Alice Author", chapters);
-    expect(book.getChapter(1).title).toBe("The Beginning");
+  it("creates a book without chapterTitle", () => {
+    const book = Book.create("b-1", "Deep Focus", 3);
+    expect(book.chapterTitle).toBeUndefined();
   });
 
-  it("throws EntityNotFoundError for missing chapter", () => {
-    const book = Book.create("b-1", "Deep Focus", "Alice Author", chapters);
-    expect(() => book.getChapter(99)).toThrow(EntityNotFoundError);
+  it("rejects empty title", () => {
+    expect(() => Book.create("b-1", "", 1)).toThrow(InvalidValueError);
   });
 
-  it("rejects book with no chapters", () => {
-    expect(() => Book.create("b-1", "Empty", "Author", [])).toThrow(
-      InvalidValueError,
-    );
+  it("rejects invalid chapter number", () => {
+    expect(() => Book.create("b-1", "Title", 0)).toThrow(InvalidValueError);
+    expect(() => Book.create("b-1", "Title", -1)).toThrow(InvalidValueError);
   });
 });
 
@@ -123,32 +128,47 @@ describe("ReadingTimeCalculator", () => {
   it("applies immersion buffer to raw calculation", () => {
     const wpm = WpmSpeed.create(300, new Date(), 1);
     const duration = ReadingTimeCalculator.calculate(3000, wpm);
-    const expectedRaw = 3000 / 300; // 10 minutes
+    const expectedRaw = 3000 / 300;
     expect(duration.inMinutes).toBe(
       Math.ceil(expectedRaw * IMMERSION_BUFFER_FACTOR),
     );
   });
 
   it("estimates WPM from calibration data", () => {
-    const wpm = ReadingTimeCalculator.estimateWpm(500, 120); // 500 words in 2 min = 250 wpm
+    const wpm = ReadingTimeCalculator.estimateWpm(500, 120);
     expect(wpm).toBe(250);
   });
 
   it("clamps estimated WPM to valid range", () => {
-    expect(ReadingTimeCalculator.estimateWpm(10, 120)).toBe(100); // very slow → clamped to min
-    expect(ReadingTimeCalculator.estimateWpm(5000, 60)).toBe(1000); // very fast → clamped to max
+    expect(ReadingTimeCalculator.estimateWpm(10, 120)).toBe(100);
+    expect(ReadingTimeCalculator.estimateWpm(5000, 60)).toBe(1000);
+  });
+});
+
+describe("DomainError hierarchy", () => {
+  it("ExternalServiceError has correct code", () => {
+    const err = new ExternalServiceError("Spotify", "timeout");
+    expect(err.code).toBe("EXTERNAL_SERVICE_ERROR");
+    expect(err.name).toBe("ExternalServiceError");
+  });
+
+  it("EntityNotFoundError has correct code", () => {
+    const err = new EntityNotFoundError("Session", "s-99");
+    expect(err.code).toBe("ENTITY_NOT_FOUND");
   });
 });
 
 describe("ReadingSession state machine", () => {
-  const playlist = Playlist.create(
-    "p-1",
-    "spotify-abc",
-    "alpha-waves",
-    30,
-    "Focus Mix",
+  const session = ReadingSession.prepare(
+    "s-1",
+    "u-1",
+    "Deep Work",
+    3,
+    "Focus Chapter",
+    "focus",
+    25,
+    stubPlaylist,
   );
-  const session = ReadingSession.prepare("s-1", "u-1", "b-1", 1, 25, playlist);
 
   it("starts from pending status", () => {
     expect(session.status).toBe("pending");
@@ -160,32 +180,51 @@ describe("ReadingSession state machine", () => {
     expect(active.startedAt).not.toBeNull();
   });
 
+  it("transitions active → paused", () => {
+    const paused = session.start().pause();
+    expect(paused.status).toBe("paused");
+    expect(paused.pausedAt).not.toBeNull();
+  });
+
+  it("transitions paused → active (resume)", () => {
+    const resumed = session.start().pause().resume();
+    expect(resumed.status).toBe("active");
+    expect(resumed.pausedAt).toBeNull();
+    expect(resumed.totalPausedSeconds).toBeGreaterThanOrEqual(0);
+  });
+
   it("transitions active → completed", () => {
-    const completed = session.start().complete();
-    expect(completed.status).toBe("completed");
+    expect(session.start().complete().status).toBe("completed");
+  });
+
+  it("transitions paused → completed", () => {
+    expect(session.start().pause().complete().status).toBe("completed");
   });
 
   it("transitions active → interrupted", () => {
-    const interrupted = session.start().interrupt();
-    expect(interrupted.status).toBe("interrupted");
+    expect(session.start().interrupt().status).toBe("interrupted");
+  });
+
+  it("transitions paused → interrupted", () => {
+    expect(session.start().pause().interrupt().status).toBe("interrupted");
   });
 
   it("cannot start an already active session", () => {
     expect(() => session.start().start()).toThrow(DomainError);
   });
 
+  it("cannot pause a pending session", () => {
+    expect(() => session.pause()).toThrow(DomainError);
+  });
+
   it("cannot complete a pending session", () => {
     expect(() => session.complete()).toThrow(DomainError);
   });
-});
 
-describe("MOOD_TO_FOCUS_MAP", () => {
-  it("maps reflective and calm moods to alpha-waves", () => {
-    expect(MOOD_TO_FOCUS_MAP.reflective).toBe("alpha-waves");
-    expect(MOOD_TO_FOCUS_MAP.calm).toBe("alpha-waves");
-  });
-
-  it("maps tense to binaural-beats", () => {
-    expect(MOOD_TO_FOCUS_MAP.tense).toBe("binaural-beats");
+  it("stores mode and book info", () => {
+    expect(session.mode).toBe("focus");
+    expect(session.bookTitle).toBe("Deep Work");
+    expect(session.chapterNumber).toBe(3);
+    expect(session.chapterTitle).toBe("Focus Chapter");
   });
 });

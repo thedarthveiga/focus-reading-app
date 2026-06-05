@@ -1,6 +1,7 @@
 export const SESSION_STATUSES = [
   "pending",
   "active",
+  "paused",
   "completed",
   "interrupted",
 ] as const;
