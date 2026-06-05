@@ -74,3 +74,22 @@ fix/something                                        ← must use bugfix/, not f
 ## PR Opening
 
 Never open PRs manually. The `auto-pr.yml` workflow creates the PR automatically after CI passes on the feature branch. After pushing, just inform the user to wait for the CI to complete on GitHub Actions at `github.com/thedarthveiga/focus-reading-app/actions`.
+
+## Before every commit
+
+**Always verify the active branch before running `git add` or `git commit`:**
+
+```bash
+git branch --show-current   # must NOT be develop or main
+```
+
+If the output is `develop` or `main`, stop immediately:
+1. Do NOT commit.
+2. Stash the changes if needed: `git stash`.
+3. Checkout or create the correct feature branch.
+4. Re-apply if stashed: `git stash pop`.
+
+A local `pre-commit` hook is installed in `.git/hooks/pre-commit` that enforces
+this rule automatically and will reject any commit attempted on `develop` or `main`.
+If a session involves `git stash` + branch switch for comparison purposes, always
+confirm the current branch with `git branch --show-current` before resuming work.
