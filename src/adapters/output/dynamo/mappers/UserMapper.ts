@@ -12,11 +12,14 @@ export interface UserDynamoItem {
   wpmCalibratedAt: string;
   wpmSampleCount: number;
   createdAt: string;
+  spotifyAccessToken?: string;
+  spotifyRefreshToken?: string;
+  spotifyTokenExpiresAt?: string;
 }
 
 export const UserMapper = {
   toItem(user: User): UserDynamoItem {
-    return {
+    const item: UserDynamoItem = {
       PK: Keys.user.pk(user.id),
       SK: Keys.user.sk(),
       entityType: "USER",
@@ -27,14 +30,36 @@ export const UserMapper = {
       wpmSampleCount: user.wpmSpeed.sampleCount,
       createdAt: user.createdAt.toISOString(),
     };
+    if (user.spotifyAccessToken)
+      item.spotifyAccessToken = user.spotifyAccessToken;
+    if (user.spotifyRefreshToken)
+      item.spotifyRefreshToken = user.spotifyRefreshToken;
+    if (user.spotifyTokenExpiresAt)
+      item.spotifyTokenExpiresAt = user.spotifyTokenExpiresAt.toISOString();
+    return item;
   },
 
   toDomain(item: UserDynamoItem): User {
-    const wpm = WpmSpeed.create(
-      item.wpmValue,
-      new Date(item.wpmCalibratedAt),
-      item.wpmSampleCount,
-    );
-    return User.create(item.id, item.email, wpm);
+    const wpm =
+      item.wpmSampleCount > 0
+        ? WpmSpeed.create(
+            item.wpmValue,
+            new Date(item.wpmCalibratedAt),
+            item.wpmSampleCount,
+          )
+        : WpmSpeed.default();
+    const user = User.create(item.id, item.email, wpm);
+    if (
+      item.spotifyAccessToken &&
+      item.spotifyRefreshToken &&
+      item.spotifyTokenExpiresAt
+    ) {
+      return user.withSpotifyTokens(
+        item.spotifyAccessToken,
+        item.spotifyRefreshToken,
+        new Date(item.spotifyTokenExpiresAt),
+      );
+    }
+    return user;
   },
 };

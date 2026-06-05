@@ -1,62 +1,135 @@
 import { ReadingSession } from "../../domain/entities/ReadingSession";
+import { ExternalServiceError } from "../../domain/errors/DomainError";
 import { ReadingTimeCalculator } from "../../domain/services/ReadingTimeCalculator";
-import { BookRepositoryPort } from "../../ports/driven/BookRepositoryPort";
+import { AIPlaylistComposerPort } from "../../ports/driven/AIPlaylistComposerPort";
 import { IdGeneratorPort } from "../../ports/driven/IdGeneratorPort";
-import { SpotifyServicePort } from "../../ports/driven/SpotifyServicePort";
+import { SessionRepositoryPort } from "../../ports/driven/SessionRepositoryPort";
+import { SpotifyMusicPort } from "../../ports/driven/SpotifyMusicPort";
 import { UserRepositoryPort } from "../../ports/driven/UserRepositoryPort";
 import {
   PrepareReadingSessionUseCase,
   PrepareSessionInput,
   PrepareSessionOutput,
 } from "../../ports/driving/PrepareReadingSessionUseCase";
+import { logger } from "../../shared/logger";
 
 export class PrepareReadingSessionInteractor implements PrepareReadingSessionUseCase {
   constructor(
     private readonly userRepo: UserRepositoryPort,
-    private readonly bookRepo: BookRepositoryPort,
-    private readonly spotifyService: SpotifyServicePort,
+    private readonly sessionRepo: SessionRepositoryPort,
+    private readonly aiComposer: AIPlaylistComposerPort,
+    private readonly spotifyMusic: SpotifyMusicPort,
     private readonly idGenerator: IdGeneratorPort,
   ) {}
 
   async execute(input: PrepareSessionInput): Promise<PrepareSessionOutput> {
-    // Fetch user and book in parallel — no dependency between them
-    const [user, book] = await Promise.all([
-      this.userRepo.findById(input.userId),
-      this.bookRepo.findById(input.bookId),
-    ]);
-
-    // Business rule: validate chapter exists (throws EntityNotFoundError if not)
-    const chapter = book.getChapter(input.chapterNumber);
-
-    // Pure domain calculation — no I/O
-    const duration = ReadingTimeCalculator.calculate(
-      chapter.wordCount,
-      user.wpmSpeed,
+    const { correlationId } = input;
+    logger.info(
+      { correlationId },
+      "PrepareReadingSessionInteractor.execute - started",
     );
 
-    // Fetch matching Spotify playlist via driven port
-    const playlist = await this.spotifyService.findPlaylistFor({
-      durationMinutes: duration.roundedForPlaylist,
-      chapterMood: chapter.mood,
-    });
+    try {
+      const user = await this.userRepo.findById(input.userId);
 
-    // Create the aggregate — business rules enforced inside the entity
-    const session = ReadingSession.prepare(
-      this.idGenerator.generate(),
-      user.id,
-      book.id,
-      input.chapterNumber,
-      duration.inMinutes,
-      playlist,
-    );
+      if (!user.hasValidSpotifyToken()) {
+        throw new ExternalServiceError(
+          "Spotify",
+          "User has no valid Spotify access token. Please authenticate first.",
+        );
+      }
 
-    // Return DTO — no domain entity leaks outside the use case
-    return {
-      sessionId: session.id,
-      estimatedMinutes: session.estimatedDurationMinutes,
-      spotifyPlaylistId: session.playlist.spotifyPlaylistId,
-      focusType: session.playlist.focusType,
-      chapterTitle: chapter.title,
-    };
+      const wordCount = await this.aiComposer.estimateWordCount({
+        bookTitle: input.bookTitle,
+        chapterNumber: input.chapterNumber,
+        chapterTitle: input.chapterTitle,
+        correlationId,
+      });
+      logger.debug(
+        { correlationId, wordCount },
+        "PrepareReadingSessionInteractor.execute - word count estimated",
+      );
+
+      const duration = ReadingTimeCalculator.calculate(
+        wordCount,
+        user.wpmSpeed,
+      );
+
+      const composed = await this.aiComposer.composePlaylist({
+        bookTitle: input.bookTitle,
+        chapterNumber: input.chapterNumber,
+        chapterTitle: input.chapterTitle,
+        mode: input.mode,
+        estimatedDurationMinutes: duration.inMinutes,
+        correlationId,
+      });
+      logger.debug(
+        { correlationId, trackCount: composed.tracks.length },
+        "PrepareReadingSessionInteractor.execute - playlist composed",
+      );
+
+      const trackIds: string[] = [];
+      for (const track of composed.tracks) {
+        const id = await this.spotifyMusic.searchTrack(
+          track.title,
+          track.artist,
+          correlationId,
+        );
+        if (id) trackIds.push(id);
+      }
+      logger.debug(
+        {
+          correlationId,
+          found: trackIds.length,
+          total: composed.tracks.length,
+        },
+        "PrepareReadingSessionInteractor.execute - tracks searched",
+      );
+
+      const playlist = await this.spotifyMusic.createPlaylist(
+        user.id,
+        composed.playlistName,
+        trackIds,
+        user.spotifyAccessToken!,
+        correlationId,
+      );
+
+      const session = ReadingSession.prepare(
+        this.idGenerator.generate(),
+        user.id,
+        input.bookTitle,
+        input.chapterNumber,
+        input.chapterTitle,
+        input.mode,
+        duration.inMinutes,
+        playlist,
+      );
+
+      await this.sessionRepo.save(session);
+
+      const output: PrepareSessionOutput = {
+        sessionId: session.id,
+        estimatedMinutes: session.estimatedDurationMinutes,
+        spotifyPlaylistUrl: session.playlist.spotifyPlaylistUrl,
+        playlistName: session.playlist.name,
+      };
+
+      logger.info(
+        { correlationId, sessionId: session.id },
+        "PrepareReadingSessionInteractor.execute - completed",
+      );
+      return output;
+    } catch (err) {
+      logger.error(
+        {
+          correlationId,
+          error: (err as Error).message,
+          stack: (err as Error).stack,
+          code: (err as { code?: string }).code ?? "UNKNOWN",
+        },
+        "PrepareReadingSessionInteractor.execute - error occurred",
+      );
+      throw err;
+    }
   }
 }
